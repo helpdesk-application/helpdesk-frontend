@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { X, Send, AlertTriangle, Upload, FileText, CheckCircle2 } from 'lucide-react';
+import { createTicket } from '../../api/api';
 
-const TicketForm = ({ onClose }) => {
+const TicketForm = ({ onClose, onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     subject: '',
-    category: 'Software',
-    priority: 'Medium',
+    priority: 'MEDIUM',
     description: ''
   });
 
@@ -22,15 +23,27 @@ const TicketForm = ({ onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
     setIsSubmitting(true);
 
-    // Simulate Network Latency for the API Team
-    setTimeout(() => {
-      console.log("Handoff to API Team:", { ...formData, attachment: selectedFile });
+    try {
+      const payload = {
+        subject: formData.subject,
+        description: formData.description,
+        priority: formData.priority
+      };
+      
+      const response = await createTicket(payload);
+      console.log("✅ Ticket created:", response.data);
       alert("Ticket Created Successfully!");
-      setIsSubmitting(false);
+      if (onSuccess) onSuccess();
       onClose();
-    }, 1500);
+    } catch (err) {
+      console.error("❌ Ticket creation failed:", err);
+      setError(err.response?.data?.error || err.message || "Failed to create ticket");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -53,36 +66,26 @@ const TicketForm = ({ onClose }) => {
             <label className="block text-sm font-semibold text-slate-700 mb-1">Subject</label>
             <input 
               required
-              type="text" 
+              type="text"
+              value={formData.subject}
               className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition bg-slate-50"
               placeholder="e.g., Cannot access VPN"
               onChange={(e) => setFormData({...formData, subject: e.target.value})}
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">Category</label>
-              <select 
-                className="w-full p-3 border border-slate-200 rounded-lg bg-slate-50 outline-none cursor-pointer"
-                onChange={(e) => setFormData({...formData, category: e.target.value})}
-              >
-                <option>Software</option>
-                <option>Hardware</option>
-                <option>Network</option>
-                <option>Access Request</option>
-              </select>
-            </div>
+          <div className="grid grid-cols-1 gap-4">
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1">Priority</label>
               <select 
+                value={formData.priority}
                 className="w-full p-3 border border-slate-200 rounded-lg bg-slate-50 outline-none cursor-pointer"
                 onChange={(e) => setFormData({...formData, priority: e.target.value})}
               >
-                <option>Low</option>
-                <option>Medium</option>
-                <option>High</option>
-                <option>Urgent</option>
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+                <option value="CRITICAL">Critical</option>
               </select>
             </div>
           </div>
@@ -91,12 +94,19 @@ const TicketForm = ({ onClose }) => {
             <label className="block text-sm font-semibold text-slate-700 mb-1">Description</label>
             <textarea 
               required
-              rows="3" 
+              rows="3"
+              value={formData.description}
               className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition bg-slate-50"
               placeholder="Please provide steps to reproduce the issue..."
               onChange={(e) => setFormData({...formData, description: e.target.value})}
             ></textarea>
           </div>
+
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {error}
+            </div>
+          )}
 
           {/* File Upload Section */}
           <div className="space-y-1">
