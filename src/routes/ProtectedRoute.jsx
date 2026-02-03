@@ -3,13 +3,21 @@ import { Navigate, useLocation } from 'react-router-dom';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const location = useLocation();
-  
+
   // 1. Check if user data exists in localStorage
-  const user = JSON.parse(localStorage.getItem('user'));
+  let user = null;
+  try {
+    user = JSON.parse(localStorage.getItem('user'));
+  } catch (e) {
+    user = null;
+  }
   const token = localStorage.getItem('token');
 
   // 2. If no token, redirect to login page
   if (!token || !user) {
+    // Clear potentially corrupted data
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

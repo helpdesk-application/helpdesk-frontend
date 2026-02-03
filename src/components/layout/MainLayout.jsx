@@ -1,16 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, Ticket, BookOpen, Users, 
-  LogOut, UserCircle, ChevronDown, Settings, Bell 
+import {
+  LayoutDashboard, Ticket, BookOpen, Users,
+  LogOut, UserCircle, ChevronDown, Settings, Bell, Check
 } from 'lucide-react';
+import { fetchNotifications, markNotificationRead } from '../../api/api';
 
 const MainLayout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
   const dropdownRef = useRef(null);
-  
+  const notifRef = useRef(null);
+
   // Get real user data from localStorage
   const user = JSON.parse(localStorage.getItem('user')) || { email: 'Guest', role: 'Customer' };
 
@@ -20,10 +24,40 @@ const MainLayout = ({ children }) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsProfileOpen(false);
       }
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setIsNotifOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const loadNotifications = async () => {
+    try {
+      const response = await fetchNotifications();
+      setNotifications(response.data);
+    } catch (err) {
+      console.error('Failed to load notifications:', err);
+    }
+  };
+
+  useEffect(() => {
+    loadNotifications();
+    // Refresh every minute
+    const interval = setInterval(loadNotifications, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleMarkRead = async (id) => {
+    try {
+      await markNotificationRead(id);
+      loadNotifications();
+    } catch (err) {
+      console.error('Failed to mark read:', err);
+    }
+  };
+
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
   const handleLogout = () => {
     localStorage.clear();
@@ -49,9 +83,8 @@ const MainLayout = ({ children }) => {
             if (!item.roles.includes(user.role)) return null;
             const isActive = location.pathname === item.path;
             return (
-              <Link key={item.path} to={item.path} className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
-                isActive ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-              }`}>
+              <Link key={item.path} to={item.path} className={`flex items-center gap-3 p-3 rounded-xl transition-all ${isActive ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                }`}>
                 {item.icon} <span className="font-medium">{item.name}</span>
               </Link>
             );
@@ -68,14 +101,56 @@ const MainLayout = ({ children }) => {
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="p-2 text-slate-400 hover:bg-slate-50 rounded-full relative">
-              <Bell size={20} />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-            </button>
+            <div className="relative" ref={notifRef}>
+              <button
+                onClick={() => setIsNotifOpen(!isNotifOpen)}
+                className="p-2 text-slate-400 hover:bg-slate-50 rounded-full relative"
+              >
+                <Bell size={20} />
+                {unreadCount > 0 && (
+                  <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                )}
+              </button>
+
+              {/* Notification Dropdown */}
+              {isNotifOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in duration-150">
+                  <div className="px-4 py-3 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                    <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Notifications</span>
+                    {unreadCount > 0 && <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">{unreadCount} New</span>}
+                  </div>
+                  <div className="max-h-96 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="p-8 text-center text-slate-400 text-sm">
+                        No notifications yet
+                      </div>
+                    ) : (
+                      notifications.map(n => (
+                        <div key={n._id} className={`p-4 border-b border-slate-50 flex gap-3 hover:bg-slate-50 transition cursor-default ${!n.is_read ? 'bg-blue-50/30' : ''}`}>
+                          <div className="flex-1">
+                            <p className={`text-sm ${!n.is_read ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>{n.message}</p>
+                            <p className="text-[10px] text-slate-400 mt-1">{new Date(n.created_at).toLocaleString()}</p>
+                          </div>
+                          {!n.is_read && (
+                            <button
+                              onClick={() => handleMarkRead(n._id)}
+                              className="self-center p-1.5 text-blue-500 hover:bg-blue-100 rounded-lg transition"
+                              title="Mark as read"
+                            >
+                              <Check size={14} />
+                            </button>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Profile Dropdown */}
             <div className="relative" ref={dropdownRef}>
-              <button 
+              <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="flex items-center gap-3 p-1.5 pl-3 hover:bg-slate-50 rounded-full border border-transparent hover:border-slate-200 transition-all"
               >
@@ -96,14 +171,22 @@ const MainLayout = ({ children }) => {
                     <p className="text-xs text-slate-400 font-medium">Signed in as</p>
                     <p className="text-sm font-bold text-slate-800 truncate">{user.email}</p>
                   </div>
-                  <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition">
+                  <Link
+                    to="/profile"
+                    onClick={() => setIsProfileOpen(false)}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition"
+                  >
                     <UserCircle size={18} /> My Profile
-                  </button>
-                  <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition">
+                  </Link>
+                  <Link
+                    to="/settings"
+                    onClick={() => setIsProfileOpen(false)}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition"
+                  >
                     <Settings size={18} /> Account Settings
-                  </button>
+                  </Link>
                   <div className="border-t border-slate-50 mt-2 pt-2">
-                    <button 
+                    <button
                       onClick={handleLogout}
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition font-semibold"
                     >
