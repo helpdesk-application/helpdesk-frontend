@@ -1,11 +1,47 @@
 import React, { useState } from 'react';
-import { Settings, Lock, Bell, Eye, EyeOff } from 'lucide-react';
+import { Settings, Lock, Bell, Eye, EyeOff, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { changePassword } from '../../api/api';
 
 const AccountSettings = () => {
     const [showPassword, setShowPassword] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [status, setStatus] = useState({ type: null, message: '' });
+    const [passwords, setPasswords] = useState({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+    });
+
+    const isFormValid =
+        passwords.currentPassword.length > 0 &&
+        passwords.newPassword.length >= 8 &&
+        passwords.newPassword === passwords.confirmPassword;
+
+    const handleUpdatePassword = async () => {
+        if (!isFormValid) return;
+
+        setIsSubmitting(true);
+        setStatus({ type: null, message: '' });
+
+        try {
+            await changePassword({
+                currentPassword: passwords.currentPassword,
+                newPassword: passwords.newPassword
+            });
+            setStatus({ type: 'success', message: 'Password updated successfully!' });
+            setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
+            window.alert('✅ Password updated successfully!');
+        } catch (err) {
+            const msg = err.response?.data?.message || 'Failed to update password';
+            setStatus({ type: 'error', message: msg });
+            window.alert('❌ ' + msg);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     return (
-        <div className="max-w-2xl mx-auto animate-in slide-in-from-bottom-4 duration-500">
+        <div className="max-w-2xl mx-auto animate-in slide-in-from-bottom-4 duration-500 pb-12">
             <div className="space-y-6">
                 <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
                     <Settings className="text-blue-500" /> Account Settings
@@ -21,11 +57,21 @@ const AccountSettings = () => {
                     </div>
 
                     <div className="space-y-4">
+                        {status.message && (
+                            <div className={`p-4 rounded-xl flex items-center gap-3 animate-in fade-in duration-300 ${status.type === 'success' ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'
+                                }`}>
+                                {status.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+                                <p className="text-sm font-medium">{status.message}</p>
+                            </div>
+                        )}
+
                         <div>
                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Current Password</label>
                             <div className="relative">
                                 <input
                                     type={showPassword ? "text" : "password"}
+                                    value={passwords.currentPassword}
+                                    onChange={(e) => setPasswords({ ...passwords, currentPassword: e.target.value })}
                                     className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
                                     placeholder="••••••••"
                                 />
@@ -39,17 +85,35 @@ const AccountSettings = () => {
                         </div>
 
                         <div>
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">New Password</label>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">New Password (Min 8 characters)</label>
                             <input
                                 type="password"
+                                value={passwords.newPassword}
+                                onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })}
                                 className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
                                 placeholder="Minimum 8 characters"
                             />
                         </div>
 
+                        <div>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Confirm New Password</label>
+                            <input
+                                type="password"
+                                value={passwords.confirmPassword}
+                                onChange={(e) => setPasswords({ ...passwords, confirmPassword: e.target.value })}
+                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+                                placeholder="Confirm new password"
+                            />
+                        </div>
+
                         <div className="pt-2">
-                            <button className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200 opacity-50 cursor-not-allowed">
-                                Update Password
+                            <button
+                                onClick={handleUpdatePassword}
+                                disabled={!isFormValid || isSubmitting}
+                                className={`bg-blue-600 text-white px-8 py-3 rounded-xl font-bold transition shadow-lg shadow-blue-200 flex items-center gap-2 ${isFormValid && !isSubmitting ? 'hover:bg-blue-700 active:scale-95' : 'opacity-50 cursor-not-allowed'
+                                    }`}
+                            >
+                                {isSubmitting ? <Loader2 size={20} className="animate-spin" /> : 'Update Password'}
                             </button>
                         </div>
                     </div>
