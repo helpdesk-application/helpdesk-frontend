@@ -1,56 +1,132 @@
-import React from 'react';
-import { User, Mail, Shield, Calendar } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import api from '../../api/api';
 
 const UserProfile = () => {
-    const user = JSON.parse(localStorage.getItem('user')) || { name: 'Guest', email: 'N/A', role: 'Customer' };
+    const [profile, setProfile] = useState({ name: '', email: '', role: '', department: '' });
+    const [loading, setLoading] = useState(true);
+    const [message, setMessage] = useState('');
+    const [error, setError] = useState('');
+
+    const fetchProfile = async () => {
+        try {
+            const res = await api.get('/users/me');
+            setProfile(res.data);
+            setLoading(false);
+        } catch (err) {
+            setError('Failed to load profile');
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchProfile();
+    }, []);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setMessage('');
+        setError('');
+
+        try {
+            const payload = { name: profile.name };
+
+            const res = await api.patch('/users/me', payload);
+            setProfile({ ...profile, ...res.data });
+            setMessage('Profile updated successfully');
+        } catch (err) {
+            setError(err.response?.data?.message || 'Update failed');
+        }
+    };
+
+    if (loading) return <div>Loading profile...</div>;
 
     return (
-        <div className="max-w-2xl mx-auto animate-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="bg-blue-600 h-32 px-8 flex items-end">
-                    <div className="h-24 w-24 rounded-full bg-white border-4 border-white shadow-lg translate-y-12 flex items-center justify-center text-blue-600">
-                        <User size={48} />
-                    </div>
-                </div>
-
-                <div className="pt-16 pb-8 px-8">
-                    <h2 className="text-2xl font-bold text-slate-800">{user.name || user.email.split('@')[0]}</h2>
-                    <p className="text-slate-500 font-medium mb-6 uppercase tracking-wider text-xs">{user.role}</p>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                            <div className="flex items-center gap-3 text-slate-400 mb-2">
-                                <Mail size={16} />
-                                <span className="text-[10px] font-bold uppercase tracking-widest">Email Address</span>
-                            </div>
-                            <p className="text-sm font-semibold text-slate-700">{user.email}</p>
-                        </div>
-
-                        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                            <div className="flex items-center gap-3 text-slate-400 mb-2">
-                                <Shield size={16} />
-                                <span className="text-[10px] font-bold uppercase tracking-widest">Account Role</span>
-                            </div>
-                            <p className="text-sm font-semibold text-slate-700">{user.role}</p>
-                        </div>
-
-                        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                            <div className="flex items-center gap-3 text-slate-400 mb-2">
-                                <Calendar size={16} />
-                                <span className="text-[10px] font-bold uppercase tracking-widest">Joined On</span>
-                            </div>
-                            <p className="text-sm font-semibold text-slate-700">Feb 2026</p>
-                        </div>
-                    </div>
-
-                    <div className="mt-8 pt-6 border-t border-slate-50">
-                        <button className="bg-slate-800 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-slate-900 transition shadow-lg opacity-50 cursor-not-allowed">
-                            Edit Profile
-                        </button>
-                        <p className="text-[10px] text-slate-400 mt-2 italic">* Profile editing is currently restricted to administrators.</p>
+        <div className="max-w-2xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <div className="md:flex md:items-center md:justify-between md:space-x-5">
+                <div className="flex items-center space-x-5">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
+                        <p className="text-sm font-medium text-gray-500">Manage your account settings</p>
                     </div>
                 </div>
             </div>
+
+            <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+                {message && (
+                    <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
+                        {message}
+                    </div>
+                )}
+                {error && (
+                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+                        {error}
+                    </div>
+                )}
+
+                <div className="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6">
+                    <div className="md:grid md:grid-cols-3 md:gap-6">
+                        <div className="md:col-span-1">
+                            <h3 className="text-lg font-medium leading-6 text-gray-900">Personal Information</h3>
+                            <p className="mt-1 text-sm text-gray-500">
+                                Your account details. Email cannot be changed.
+                            </p>
+                        </div>
+                        <div className="mt-5 md:mt-0 md:col-span-2">
+                            <div className="grid grid-cols-6 gap-6">
+                                <div className="col-span-6 sm:col-span-4">
+                                    <label className="block text-sm font-medium text-gray-700">Name</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={profile.name}
+                                        onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                                        className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                                    />
+                                </div>
+
+                                <div className="col-span-6 sm:col-span-4">
+                                    <label className="block text-sm font-medium text-gray-700">Email (Read Only)</label>
+                                    <input
+                                        type="text"
+                                        disabled
+                                        value={profile.email}
+                                        className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-100 text-gray-500"
+                                    />
+                                </div>
+
+                                <div className="col-span-6 sm:col-span-3">
+                                    <label className="block text-sm font-medium text-gray-700">Role</label>
+                                    <input
+                                        type="text"
+                                        disabled
+                                        value={profile.role}
+                                        className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-100 text-gray-500"
+                                    />
+                                </div>
+
+                                <div className="col-span-6 sm:col-span-3">
+                                    <label className="block text-sm font-medium text-gray-700">Department</label>
+                                    <input
+                                        type="text"
+                                        disabled
+                                        value={profile.department}
+                                        className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-100 text-gray-500"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex justify-end">
+                    <button
+                        type="submit"
+                        className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    >
+                        Save Changes
+                    </button>
+                </div>
+            </form>
         </div>
     );
 };

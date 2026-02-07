@@ -5,12 +5,15 @@ import { fetchArticles, searchArticles, createArticle } from '../../api/api';
 const KnowledgeBase = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [articles, setArticles] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // Load articles from API
-  const loadArticles = async (keyword = '') => {
-    setLoading(true);
+  const loadArticles = async (keyword = '', isInitial = false) => {
+    if (isInitial) setInitialLoading(true);
+    else setLoading(true);
+
     setError(null);
     try {
       const response = keyword
@@ -21,8 +24,9 @@ const KnowledgeBase = () => {
         id: a.id || a._id,
         category: a.category || a.tags?.[0] || 'General',
         title: a.title,
-        excerpt: a.content?.substring(0, 100) + '...' || a.excerpt || '',
-        fullContent: a.content || ''
+        excerpt: a.content?.substring(0, 150) + (a.content?.length > 150 ? '...' : '') || a.excerpt || '',
+        fullContent: a.content || '',
+        tags: a.tags || []
       }));
       setArticles(mapped);
     } catch (err) {
@@ -30,24 +34,30 @@ const KnowledgeBase = () => {
       setError(err.response?.data?.error || err.message || 'Failed to load articles');
     } finally {
       setLoading(false);
+      setInitialLoading(false);
     }
   };
 
+  // Initial load
   useEffect(() => {
-    loadArticles();
+    loadArticles('', true);
   }, []);
 
-  // Debounced search
+  // Debounced search - skip initial run to avoid double fetch
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (searchTerm) {
-        loadArticles(searchTerm);
-      } else {
+    if (searchTerm === '') {
+      // If we've already done initial load, just load articles again if search cleared
+      if (!initialLoading) {
         loadArticles();
       }
-    }, 300);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      loadArticles(searchTerm);
+    }, 400);
     return () => clearTimeout(timer);
-  }, [searchTerm]);
+  }, [searchTerm, initialLoading]);
 
 
   const filteredArticles = articles;
@@ -94,17 +104,22 @@ const KnowledgeBase = () => {
     }
   };
 
-  if (loading) {
+  if (initialLoading) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        <span className="ml-3 text-slate-600">Loading articles...</span>
+        <span className="ml-3 text-slate-600 font-medium">Loading Help Center...</span>
       </div>
     );
   }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-sm font-medium">
+          {error}
+        </div>
+      )}
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-slate-900 to-blue-900 rounded-3xl p-10 text-white shadow-xl relative overflow-hidden">
         <div className="relative z-10 max-w-2xl">
@@ -125,9 +140,14 @@ const KnowledgeBase = () => {
             <input
               type="text"
               placeholder="What do you need help with?"
-              className="w-full pl-14 pr-6 py-5 rounded-2xl shadow-2xl focus:ring-4 focus:ring-blue-500 outline-none transition text-lg"
+              className="w-full pl-14 pr-16 py-5 rounded-2xl shadow-2xl focus:ring-4 focus:ring-blue-500 outline-none transition text-lg"
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+            {loading && (
+              <div className="absolute right-6 top-1/2 -translate-y-1/2">
+                <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            )}
           </div>
         </div>
         <Lightbulb className="absolute right-[-20px] bottom-[-20px] text-blue-500/20 w-64 h-64 rotate-12" />
@@ -157,6 +177,13 @@ const KnowledgeBase = () => {
                 </div>
                 <h3 className="text-xl font-bold text-slate-800 mb-3 group-hover:text-blue-600 transition">{article.title}</h3>
                 <p className="text-slate-500 text-sm leading-relaxed mb-6">{article.excerpt}</p>
+              </div>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {article.tags.map((tag, idx) => (
+                  <span key={idx} className="text-[9px] font-medium text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                    #{tag}
+                  </span>
+                ))}
               </div>
               <div className="flex items-center gap-2 text-blue-600 font-bold text-sm">
                 Read Guide <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
@@ -238,24 +265,20 @@ const KnowledgeBase = () => {
             </div>
             <div className="p-8 overflow-y-auto">
               <div className="prose prose-slate max-w-none">
-                {selectedArticle.excerpt.length > 100 && !selectedArticle.content ? (
-                  // If only excerpt is available from list (though API returns full content usually)
-                  // We actually mapped excerpt from content, but API returns full 'content' field too.
-                  // Wait, my mapping only kept 'excerpt', not 'content'. I need to fix the mapping too!
-                  <p>{selectedArticle.excerpt}</p>
-                ) : (
-                  <p className="whitespace-pre-wrap text-slate-600 leading-relaxed text-lg">
-                    {/* The mapping in loadArticles only mapped 'excerpt'. I missed mapping the full 'content'.
-                             I must update loadArticles mapping first, or logic below will fail.
-                             For now, I'll assume I fix mapping in next step or include it here if possible.
-                             Actually I can't edit loadArticles here easily with this chunk.
-                             I'll assume 'content' property allows access to full content if the object has it.
-                             But wait, I mapped: { ... excerpt: a.content... }. I did NOT map 'content' key!
-                             I need to fix the mapping in loadArticles as well!
-                          */}
-                    {/* Temporarily will show excerpt if content missing, but I will fix mapping in next step */}
-                    {selectedArticle.fullContent || selectedArticle.excerpt}
-                  </p>
+                <div className="whitespace-pre-wrap text-slate-600 leading-relaxed text-lg mb-8">
+                  {selectedArticle.fullContent || selectedArticle.excerpt}
+                </div>
+                {selectedArticle.tags?.length > 0 && (
+                  <div className="mt-6 pt-6 border-t border-slate-100">
+                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Related Tags</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedArticle.tags.map((tag, idx) => (
+                        <span key={idx} className="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-sm font-medium">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
             </div>

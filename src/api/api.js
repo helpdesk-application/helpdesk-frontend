@@ -54,7 +54,13 @@ export const markNotificationRead = (id) => API.patch(`/notifications/${id}/read
 
 export const login = (credentials) => API.post('/auth/login', credentials);
 export const register = (payload) => API.post('/auth/register', payload);
+export const changePassword = (payload) => API.post('/auth/change-password', payload);
 export const getTestToken = (payload) => API.post('/auth/test-token', payload);
+
+// Attachments
+export const uploadAttachment = (formData) => API.post('/attachments', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+export const fetchAttachments = (ticketId) => API.get(`/attachments/ticket/${ticketId}`);
+export const downloadAttachment = (filename) => `${API.defaults.baseURL}/attachments/download/${filename}`; // Direct link
 
 // Knowledge Base
 export const fetchArticles = () => API.get('/kb');
@@ -67,3 +73,5 @@ export const createUser = (payload) => API.post('/users', payload);
 export const updateUser = (id, payload) => API.patch(`/users/${id}`, payload);
 export const toggleUserStatus = (id) => API.patch(`/users/${id}/status`);
 export const deleteUser = (id) => API.delete(`/users/${id}`);
+
+export default API;

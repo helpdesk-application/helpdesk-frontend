@@ -10,7 +10,8 @@ import {
   Send
 } from 'lucide-react';
 import SLATimer from '../../components/tickets/SLATimer';
-import { fetchTicketById, updateTicketStatus, fetchReplies, postReply, fetchUsers, assignTicket } from '../../api/api';
+import FileUploader from '../../components/FileUploader';
+import { fetchTicketById, updateTicketStatus, fetchReplies, postReply, fetchUsers, assignTicket, fetchAttachments } from '../../api/api';
 
 const TicketDetail = ({ ticketId: propTicketId, onBack: propOnBack }) => {
   const { id: routeId } = useParams();
@@ -21,6 +22,7 @@ const TicketDetail = ({ ticketId: propTicketId, onBack: propOnBack }) => {
 
   const [ticket, setTicket] = useState(null);
   const [replies, setReplies] = useState([]);
+  const [attachments, setAttachments] = useState([]);
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -38,17 +40,24 @@ const TicketDetail = ({ ticketId: propTicketId, onBack: propOnBack }) => {
       try {
         const promises = [
           fetchTicketById(ticketId),
-          fetchReplies(ticketId)
+          fetchReplies(ticketId),
+          fetchAttachments(ticketId)
         ];
 
         if (isAdminOrAgent) {
           promises.push(fetchUsers());
         }
 
-        const results = await Promise.all(promises);
-        const ticketRes = results[0];
-        const repliesRes = results[1];
-        const usersRes = isAdminOrAgent ? results[2] : null;
+        const [ticketRes, repliesRes, attachmentsRes] = await Promise.all([
+          fetchTicketById(ticketId),
+          fetchReplies(ticketId),
+          fetchAttachments(ticketId).catch(err => {
+            console.warn("Failed to fetch attachments:", err);
+            return { data: [] }; // Return empty list on error
+          })
+        ]);
+
+        const usersRes = isAdminOrAgent ? await fetchUsers() : null;
 
         const t = ticketRes.data;
         setTicket({
@@ -70,6 +79,7 @@ const TicketDetail = ({ ticketId: propTicketId, onBack: propOnBack }) => {
         });
 
         setReplies(repliesRes.data || []);
+        setAttachments(attachmentsRes.data || []);
         // Filter agents and admins
         if (isAdminOrAgent && usersRes) {
           setAgents((usersRes.data || []).filter(u => u.role === 'Agent' || u.role === 'Admin' || u.role === 'Super Admin'));
@@ -82,7 +92,16 @@ const TicketDetail = ({ ticketId: propTicketId, onBack: propOnBack }) => {
       }
     };
     loadTicket();
-  }, [ticketId]);
+  }, [ticketId, isAdminOrAgent]);
+
+  const reloadAttachments = async () => {
+    try {
+      const res = await fetchAttachments(ticketId);
+      setAttachments(res.data || []);
+    } catch (err) {
+      console.error("Failed to reload attachments", err);
+    }
+  };
 
   const handleStatusChange = async (newStatus) => {
     const apiStatus = newStatus === 'Open' ? 'OPEN' :
@@ -175,8 +194,45 @@ const TicketDetail = ({ ticketId: propTicketId, onBack: propOnBack }) => {
               </span>
             </div>
 
-            <div className="prose prose-slate max-w-none text-slate-600 leading-relaxed">
+            <div className="prose prose-slate max-w-none text-slate-600 leading-relaxed mb-6">
               <p>{ticket.description}</p>
+            </div>
+
+            {/* Attachments Section */}
+            <div className="border-t border-slate-100 pt-6">
+              <h4 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+                <Tag size={16} className="text-slate-400" /> Attachments
+              </h4>
+
+              {attachments.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                  {attachments.map(file => (
+                    <div key={file._id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs uppercase">
+                          {file.original_name.split('.').pop()}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-slate-700 truncate">{file.original_name}</p>
+                          <p className="text-xs text-slate-400">{(file.size / 1024).toFixed(1)} KB</p>
+                        </div>
+                      </div>
+                      <a
+                        href={`http://localhost:3000/api/attachments/download/${file.filename}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 hover:text-blue-700 text-xs font-semibold px-2 py-1 rounded hover:bg-blue-50 transition"
+                      >
+                        Download
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-400 italic mb-4">No attachments yet.</p>
+              )}
+
+              <FileUploader ticketId={ticketId} onUploadSuccess={reloadAttachments} />
             </div>
           </div>
 

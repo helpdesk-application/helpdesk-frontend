@@ -8,7 +8,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   let user = null;
   try {
     user = JSON.parse(localStorage.getItem('user'));
-  } catch (e) {
+  } catch {
     user = null;
   }
   const token = localStorage.getItem('token');

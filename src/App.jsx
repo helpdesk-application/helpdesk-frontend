@@ -1,3 +1,4 @@
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import KnowledgeBase from './features/knowledge-base/KnowledgeBase';
 
@@ -14,6 +15,10 @@ import UserManagement from './features/users/UserManagement';
 import UserProfile from './features/users/UserProfile';
 import AccountSettings from './features/users/AccountSettings';
 import TicketDetail from './features/tickets/TicketDetail';
+
+// 3. Lazy Load Auth Features
+const ForgotPassword = lazy(() => import('./features/auth/ForgotPassword'));
+const ResetPassword = lazy(() => import('./features/auth/ResetPassword'));
 
 // 3. Unauthorized Access Page
 const Unauthorized = () => (
@@ -39,6 +44,16 @@ function App() {
         {/* --- Public Routes --- */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={
+          <Suspense fallback={<div>Loading...</div>}>
+            <ForgotPassword />
+          </Suspense>
+        } />
+        <Route path="/reset-password" element={
+          <Suspense fallback={<div>Loading...</div>}>
+            <ResetPassword />
+          </Suspense>
+        } />
 
         {/* Redirect base URL to login if not authenticated, else dashboard */}
         <Route

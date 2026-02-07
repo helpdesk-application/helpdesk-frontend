@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Send, AlertTriangle, Upload, FileText, CheckCircle2 } from 'lucide-react';
-import { createTicket } from '../../api/api';
+import { createTicket, uploadAttachment } from '../../api/api';
 
 const TicketForm = ({ onClose, onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,9 +32,27 @@ const TicketForm = ({ onClose, onSuccess }) => {
         description: formData.description,
         priority: formData.priority
       };
-      
+
+      // 1. Create Ticket
       const response = await createTicket(payload);
+      const ticketId = response.data.ticket._id;
       console.log("✅ Ticket created:", response.data);
+
+      // 2. Upload Attachment if exists
+      if (selectedFile && ticketId) {
+        try {
+          const uploadData = new FormData();
+          uploadData.append('ticket_id', ticketId);
+          uploadData.append('file', selectedFile);
+
+          await uploadAttachment(uploadData);
+          console.log("✅ Attachment uploaded successfully");
+        } catch (uploadErr) {
+          console.error("❌ Failed to upload attachment:", uploadErr);
+          alert("Ticket created, but failed to upload attachment.");
+        }
+      }
+
       alert("Ticket Created Successfully!");
       if (onSuccess) onSuccess();
       onClose();
@@ -64,23 +82,23 @@ const TicketForm = ({ onClose, onSuccess }) => {
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-1">Subject</label>
-            <input 
+            <input
               required
               type="text"
               value={formData.subject}
               className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition bg-slate-50"
               placeholder="e.g., Cannot access VPN"
-              onChange={(e) => setFormData({...formData, subject: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
             />
           </div>
 
           <div className="grid grid-cols-1 gap-4">
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1">Priority</label>
-              <select 
+              <select
                 value={formData.priority}
                 className="w-full p-3 border border-slate-200 rounded-lg bg-slate-50 outline-none cursor-pointer"
-                onChange={(e) => setFormData({...formData, priority: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
               >
                 <option value="LOW">Low</option>
                 <option value="MEDIUM">Medium</option>
@@ -92,13 +110,13 @@ const TicketForm = ({ onClose, onSuccess }) => {
 
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-1">Description</label>
-            <textarea 
+            <textarea
               required
               rows="3"
               value={formData.description}
               className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition bg-slate-50"
               placeholder="Please provide steps to reproduce the issue..."
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             ></textarea>
           </div>
 
@@ -131,7 +149,7 @@ const TicketForm = ({ onClose, onSuccess }) => {
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button 
+            <button
               type="button"
               disabled={isSubmitting}
               onClick={onClose}
@@ -139,7 +157,7 @@ const TicketForm = ({ onClose, onSuccess }) => {
             >
               Cancel
             </button>
-            <button 
+            <button
               type="submit"
               disabled={isSubmitting}
               className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 flex items-center justify-center gap-2 shadow-lg shadow-blue-200 transition disabled:bg-blue-400"
