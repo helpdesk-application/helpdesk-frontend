@@ -17,34 +17,40 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    
+
     console.log('🔐 Login attempt started...');
     console.log('Credentials:', credentials);
     console.log('API baseURL:', 'http://localhost:3000/api');
-    
+
     // Call real API login
     login(credentials)
       .then(res => {
         console.log('✅ Login API call succeeded!');
         console.log('Response status:', res.status);
         console.log('Response data:', res.data);
-        
+
         const { token, user } = res.data;
-        
+
         if (!token || !user) {
           throw new Error('Invalid response: missing token or user');
         }
-        
+
         console.log('💾 Storing token and user in localStorage...');
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
-        
+
         console.log('✅ Stored successfully');
-        console.log('Redirecting to dashboard...');
-        
+
+        // Determine starting page based on role
+        const startPage = ['Admin', 'Super Admin', 'Manager'].includes(user.role)
+          ? '/dashboard'
+          : '/tickets';
+
+        console.log(`Redirecting to ${startPage}...`);
+
         // Use setTimeout to ensure state update completes before navigation
         setTimeout(() => {
-          navigate('/dashboard', { replace: true });
+          navigate(startPage, { replace: true });
         }, 100);
       })
       .catch(err => {
@@ -52,10 +58,10 @@ const Login = () => {
         console.error('Error object:', err);
         console.error('Response:', err?.response);
         console.error('Response data:', err?.response?.data);
-        
+
         const msg = err?.response?.data?.message || err.message || 'Login failed';
         console.error('Error message:', msg);
-        
+
         setError(msg);
       })
       .finally(() => setLoading(false));
@@ -110,7 +116,7 @@ const Login = () => {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
-        
+
         <div className="mt-6 text-center">
           <p className="text-sm text-slate-600">
             Don't have an account?{' '}

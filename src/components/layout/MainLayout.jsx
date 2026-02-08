@@ -65,9 +65,9 @@ const MainLayout = ({ children }) => {
   };
 
   const menuItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} />, roles: ['Admin', 'Agent', 'Customer', 'Super Admin'] },
-    { name: 'Tickets', path: '/tickets', icon: <Ticket size={20} />, roles: ['Admin', 'Agent', 'Customer', 'Super Admin'] },
-    { name: 'Knowledge Base', path: '/kb', icon: <BookOpen size={20} />, roles: ['Admin', 'Agent', 'Customer', 'Super Admin'] },
+    { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} />, roles: ['Admin', 'Super Admin', 'Manager'] },
+    { name: 'Tickets', path: '/tickets', icon: <Ticket size={20} />, roles: ['Admin', 'Agent', 'Customer', 'Super Admin', 'Manager'] },
+    { name: 'Knowledge Base', path: '/kb', icon: <BookOpen size={20} />, roles: ['Admin', 'Agent', 'Customer', 'Super Admin', 'Manager'] },
     { name: 'Users', path: '/users', icon: <Users size={20} />, roles: ['Admin', 'Super Admin'] },
   ];
 
@@ -126,24 +126,30 @@ const MainLayout = ({ children }) => {
                       </div>
                     ) : (
                       notifications.map(n => (
-                        <div key={n._id} className={`p-4 border-b border-slate-50 flex gap-3 hover:bg-slate-50 transition cursor-default ${!n.is_read ? 'bg-blue-50/30' : ''}`}>
+                        <Link
+                          key={n._id}
+                          to={n.ticket_id ? `/tickets/${n.ticket_id}` : '#'}
+                          onClick={() => {
+                            if (!n.is_read) handleMarkRead(n._id);
+                            setIsNotifOpen(false);
+                          }}
+                          className={`p-4 border-b border-slate-50 flex gap-3 hover:bg-slate-50 transition cursor-pointer ${!n.is_read ? 'bg-blue-50/30' : ''}`}
+                        >
                           <div className="flex-1">
                             <p className={`text-sm ${!n.is_read ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>{n.message}</p>
                             <p className="text-[10px] text-slate-400 mt-1">{new Date(n.created_at).toLocaleString()}</p>
                           </div>
-                          {!n.is_read && (
-                            <button
-                              onClick={() => handleMarkRead(n._id)}
-                              className="self-center p-1.5 text-blue-500 hover:bg-blue-100 rounded-lg transition"
-                              title="Mark as read"
-                            >
-                              <Check size={14} />
-                            </button>
-                          )}
-                        </div>
+                        </Link>
                       ))
                     )}
                   </div>
+                  <Link
+                    to="/notifications"
+                    onClick={() => setIsNotifOpen(false)}
+                    className="block py-3 text-center text-xs font-bold text-blue-600 bg-slate-50 border-t border-slate-100 hover:bg-blue-50 transition"
+                  >
+                    View All Notifications
+                  </Link>
                 </div>
               )}
             </div>
