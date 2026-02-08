@@ -44,6 +44,7 @@ export const updateTicketStatus = (id, status) => API.patch(`/tickets/${id}/stat
 export const assignTicket = (id, agentId) => API.patch(`/tickets/${id}/assign`, { assigned_agent_id: agentId });
 export const fetchReplies = (ticketId) => API.get(`/tickets/${ticketId}/replies`);
 export const postReply = (ticketId, message) => API.post(`/tickets/${ticketId}/replies`, { message });
+export const fetchTicketHistory = (ticketId) => API.get(`/tickets/${ticketId}/history`);
 
 // Analytics
 export const fetchAnalytics = () => API.get('/reports/summary');
@@ -64,11 +65,14 @@ export const downloadAttachment = (filename) => `${API.defaults.baseURL}/attachm
 
 // Knowledge Base
 export const fetchArticles = () => API.get('/kb');
-export const searchArticles = (keyword) => API.get(`/kb/search?keyword=${encodeURIComponent(keyword)}`);
+export const fetchKBCategories = () => API.get('/kb/categories');
+export const searchArticles = (keyword) => API.get(`/kb/search?q=${encodeURIComponent(keyword)}`);
 export const createArticle = (payload) => API.post('/kb', payload);
+export const createKBCategory = (payload) => API.post('/kb/categories', payload);
 
 // Users
 export const fetchUsers = () => API.get('/users');
+export const fetchUserActivities = () => API.get('/users/activities');
 export const createUser = (payload) => API.post('/users', payload);
 export const updateUser = (id, payload) => API.patch(`/users/${id}`, payload);
 export const toggleUserStatus = (id) => API.patch(`/users/${id}/status`);

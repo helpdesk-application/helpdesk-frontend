@@ -30,13 +30,19 @@ const Register = () => {
     }
 
     setLoading(true);
-    
+
     register({ email: formData.email, password: formData.password })
       .then(res => {
         const { token, user } = res.data;
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
-        navigate('/dashboard', { replace: true });
+
+        // Determine starting page based on role (mirroring Login logic)
+        const startPage = ['Admin', 'Super Admin', 'Manager'].includes(user.role)
+          ? '/dashboard'
+          : '/tickets';
+
+        navigate(startPage, { replace: true });
       })
       .catch(err => {
         const msg = err?.response?.data?.message || err.message || 'Registration failed';

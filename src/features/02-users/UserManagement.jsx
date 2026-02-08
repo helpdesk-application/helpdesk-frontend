@@ -11,7 +11,7 @@ const UserManagement = () => {
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'Customer', department: 'General' });
-  const [editData, setEditData] = useState({ id: '', name: '', email: '', role: 'Customer', department: 'General' });
+  const [editData, setEditData] = useState({ id: '', name: '', email: '', password: '', role: 'Customer', department: 'General' });
 
   const [creating, setCreating] = useState(false);
   const [updating, setUpdating] = useState(false);
@@ -47,6 +47,8 @@ const UserManagement = () => {
   const getRoleBadge = (role) => {
     switch (role) {
       case 'Admin': return 'bg-purple-100 text-purple-700 border-purple-200';
+      case 'Super Admin': return 'bg-red-100 text-red-700 border-red-200';
+      case 'Manager': return 'bg-orange-100 text-orange-700 border-orange-200';
       case 'Agent': return 'bg-blue-100 text-blue-700 border-blue-200';
       default: return 'bg-slate-100 text-slate-700 border-slate-200';
     }
@@ -84,6 +86,7 @@ const UserManagement = () => {
       id: user.id,
       name: user.name,
       email: user.email,
+      password: '',
       role: user.role,
       department: user.department
     });
@@ -94,11 +97,15 @@ const UserManagement = () => {
     e.preventDefault();
     setUpdating(true);
     try {
-      await updateUser(editData.id, {
+      const updatePayload = {
         email: editData.email,
         role: editData.role,
         department: editData.department
-      });
+      };
+      if (editData.password) {
+        updatePayload.password = editData.password;
+      }
+      await updateUser(editData.id, updatePayload);
       setShowEditModal(false);
       loadUsers();
       alert('User updated successfully!');
@@ -272,7 +279,9 @@ const UserManagement = () => {
                     >
                       <option value="Customer">Customer</option>
                       <option value="Agent">Agent</option>
+                      <option value="Manager">Manager</option>
                       <option value="Admin">Admin</option>
+                      <option value="Super Admin">Super Admin</option>
                     </select>
                   </div>
                   <div>
@@ -322,6 +331,16 @@ const UserManagement = () => {
                     className="w-full p-3 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">New Password (leave blank to keep current)</label>
+                  <input
+                    type="password"
+                    value={editData.password}
+                    onChange={(e) => setEditData({ ...editData, password: e.target.value })}
+                    className="w-full p-3 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="••••••••"
+                  />
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-1">Role</label>
@@ -332,7 +351,9 @@ const UserManagement = () => {
                     >
                       <option value="Customer">Customer</option>
                       <option value="Agent">Agent</option>
+                      <option value="Manager">Manager</option>
                       <option value="Admin">Admin</option>
+                      <option value="Super Admin">Super Admin</option>
                     </select>
                   </div>
                   <div>

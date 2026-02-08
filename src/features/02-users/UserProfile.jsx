@@ -1,16 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../api/api';
+import { Clock } from 'lucide-react';
 
 const UserProfile = () => {
     const [profile, setProfile] = useState({ name: '', email: '', role: '', department: '' });
+    const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
 
     const fetchProfile = async () => {
         try {
-            const res = await api.get('/users/me');
-            setProfile(res.data);
+            const [profileRes, activityRes] = await Promise.all([
+                api.get('/users/me'),
+                api.get('/users/activities') // Need to add this to api.js or use direct call
+            ]);
+            setProfile(profileRes.data);
+            setActivities(activityRes.data || []);
             setLoading(false);
         } catch (err) {
             setError('Failed to load profile');
@@ -127,6 +133,30 @@ const UserProfile = () => {
                     </button>
                 </div>
             </form>
+
+            {/* Activity Log Section */}
+            <div className="mt-12">
+                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <Clock size={20} className="text-blue-500" /> Recent Activity
+                </h3>
+                <div className="bg-white shadow rounded-2xl border border-slate-100 divide-y divide-slate-50 overflow-hidden">
+                    {activities.length === 0 ? (
+                        <div className="p-8 text-center text-slate-400 text-sm">No recent activity detected.</div>
+                    ) : (
+                        activities.map((act, idx) => (
+                            <div key={idx} className="p-4 flex justify-between items-center group hover:bg-slate-50 transition">
+                                <div>
+                                    <p className="text-sm font-bold text-slate-700">{act.action}</p>
+                                    <p className="text-xs text-slate-400">{act.description}</p>
+                                </div>
+                                <div className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">
+                                    {new Date(act.created_at).toLocaleDateString()}
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
         </div>
     );
 };
