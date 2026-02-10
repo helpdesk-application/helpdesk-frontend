@@ -54,13 +54,10 @@ const Login = () => {
         }, 100);
       })
       .catch(err => {
-        console.error('❌ Login failed');
-        console.error('Error object:', err);
-        console.error('Response:', err?.response);
-        console.error('Response data:', err?.response?.data);
+        console.error('Login failed:', err.message);
 
         const msg = err?.response?.data?.message || err.message || 'Login failed';
-        console.error('Error message:', msg);
+
 
         setError(msg);
       })

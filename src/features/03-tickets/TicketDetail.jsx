@@ -100,10 +100,7 @@ const TicketDetail = ({ ticketId: propTicketId, onBack: propOnBack }) => {
           sentiment: t.sentiment || 'Neutral'
         });
 
-        // Defensive checks with logging
-        if (!Array.isArray(repliesRes.data)) console.error('Replies is not an array:', repliesRes.data);
-        if (!Array.isArray(attachmentsRes.data)) console.error('Attachments is not an array:', attachmentsRes.data);
-        if (!Array.isArray(historyRes.data)) console.error('History is not an array:', historyRes.data);
+
 
         setReplies(Array.isArray(repliesRes.data) ? repliesRes.data : []);
         setAttachments(Array.isArray(attachmentsRes.data) ? attachmentsRes.data : []);
