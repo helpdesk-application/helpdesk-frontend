@@ -15,23 +15,15 @@ API.interceptors.request.use((req) => {
   return req;
 });
 
-// Log all responses for debugging
+// Auto logout on 401 (Unauthorized)
 API.interceptors.response.use(
-  (res) => {
-    console.log('[API Response]', res.config.method.toUpperCase(), res.config.url, res.status);
-    return res;
-  },
+  (res) => res,
   (err) => {
-    console.error('[API Error]', err.config?.method?.toUpperCase(), err.config?.url, err.response?.status, err.message);
-
-    // Auto logout on 401 (Unauthorized)
     if (err.response && err.response.status === 401 && !err.config.url.endsWith('/auth/login')) {
-      console.warn('[API] 401 Unauthorized detected. Clearing session and redirecting to login...');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
     }
-
     return Promise.reject(err);
   }
 );
@@ -56,7 +48,6 @@ export const markNotificationRead = (id) => API.patch(`/notifications/${id}/read
 export const login = (credentials) => API.post('/auth/login', credentials);
 export const register = (payload) => API.post('/auth/register', payload);
 export const changePassword = (payload) => API.post('/auth/change-password', payload);
-
 
 // Attachments
 export const uploadAttachment = (formData) => API.post('/attachments', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
