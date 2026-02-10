@@ -53,7 +53,7 @@ const AccountSettings = () => {
                         <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
                             <Lock size={20} />
                         </div>
-                        <h3 className="text-lg font-bold text-slate-800">Change Password</h3>
+                        <h3 className="text-lg font-bold text-slate-900">Change Password</h3>
                     </div>
 
                     <div className="space-y-4">
@@ -66,13 +66,13 @@ const AccountSettings = () => {
                         )}
 
                         <div>
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Current Password</label>
+                            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-2">Current Password</label>
                             <div className="relative">
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     value={passwords.currentPassword}
                                     onChange={(e) => setPasswords({ ...passwords, currentPassword: e.target.value })}
-                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+                                    className="w-full p-4 bg-white border border-slate-300 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition shadow-sm text-slate-800 placeholder:text-slate-500 font-medium"
                                     placeholder="••••••••"
                                 />
                                 <button
@@ -85,32 +85,32 @@ const AccountSettings = () => {
                         </div>
 
                         <div>
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">New Password (Min 8 characters)</label>
+                            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-2">New Password (Min 8 characters)</label>
                             <input
                                 type="password"
                                 value={passwords.newPassword}
                                 onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })}
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+                                className="w-full p-4 bg-white border border-slate-300 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition shadow-sm text-slate-800 placeholder:text-slate-500 font-medium"
                                 placeholder="Minimum 8 characters"
                             />
                         </div>
 
                         <div>
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Confirm New Password</label>
+                            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-2">Confirm New Password</label>
                             <input
                                 type="password"
                                 value={passwords.confirmPassword}
                                 onChange={(e) => setPasswords({ ...passwords, confirmPassword: e.target.value })}
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+                                className="w-full p-4 bg-white border border-slate-300 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition shadow-sm text-slate-800 placeholder:text-slate-500 font-medium"
                                 placeholder="Confirm new password"
                             />
                         </div>
 
-                        <div className="pt-2">
+                        <div className="pt-4">
                             <button
                                 onClick={handleUpdatePassword}
                                 disabled={!isFormValid || isSubmitting}
-                                className={`bg-blue-600 text-white px-8 py-3 rounded-xl font-bold transition shadow-lg shadow-blue-200 flex items-center gap-2 ${isFormValid && !isSubmitting ? 'hover:bg-blue-700 active:scale-95' : 'opacity-50 cursor-not-allowed'
+                                className={`w-full md:w-auto bg-blue-600 text-white px-8 py-4 rounded-xl font-bold transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-2 ${isFormValid && !isSubmitting ? 'hover:bg-blue-700 hover:shadow-blue-300 hover:-translate-y-0.5 active:scale-95' : 'opacity-50 cursor-not-allowed bg-slate-400 shadow-none'
                                     }`}
                             >
                                 {isSubmitting ? <Loader2 size={20} className="animate-spin" /> : 'Update Password'}
@@ -125,7 +125,7 @@ const AccountSettings = () => {
                         <div className="p-2 bg-yellow-50 text-yellow-600 rounded-lg">
                             <Bell size={20} />
                         </div>
-                        <h3 className="text-lg font-bold text-slate-800">Notification Preferences</h3>
+                        <h3 className="text-lg font-bold text-slate-900">Notification Preferences</h3>
                     </div>
 
                     <div className="space-y-4">

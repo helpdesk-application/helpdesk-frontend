@@ -5,9 +5,25 @@ const SLATimer = ({ deadline }) => {
   const [isUrgent, setIsUrgent] = useState(false);
 
   useEffect(() => {
+    if (!deadline) {
+      setTimeLeft("No Deadline");
+      return;
+    }
+
     const timer = setInterval(() => {
+      if (!deadline) {
+        clearInterval(timer);
+        return;
+      }
+      const deadlineTime = new Date(deadline).getTime();
+      if (isNaN(deadlineTime)) {
+        setTimeLeft("Invalid Deadline");
+        clearInterval(timer);
+        return;
+      }
+
       const now = new Date().getTime();
-      const distance = new Date(deadline).getTime() - now;
+      const distance = deadlineTime - now;
 
       const hours = Math.floor(distance / (1000 * 60 * 60));
       const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));

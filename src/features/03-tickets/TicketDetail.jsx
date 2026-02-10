@@ -93,16 +93,21 @@ const TicketDetail = ({ ticketId: propTicketId, onBack: propOnBack }) => {
             t.priority === 'LOW' ? 'Low' :
               t.priority === 'CRITICAL' ? 'Critical' : 'Medium',
           category: t.category || 'General',
-          customer: t.customer_id?.email || 'Unknown',
+          customer: t.customer_id?.email || t.customer_id?.name || 'Unknown',
           assigned_agent_id: t.assigned_agent_id?._id || t.assigned_agent_id || '',
           createdAt: new Date(t.created_at).toLocaleString(),
-          deadline: new Date(new Date(t.created_at).getTime() + 2 * 60 * 60 * 1000).toISOString(),
+          deadline: t.created_at ? new Date(new Date(t.created_at).getTime() + 2 * 60 * 60 * 1000).toISOString() : null,
           sentiment: t.sentiment || 'Neutral'
         });
 
-        setReplies(repliesRes.data || []);
-        setAttachments(attachmentsRes.data || []);
-        setHistory(historyRes.data || []);
+        // Defensive checks with logging
+        if (!Array.isArray(repliesRes.data)) console.error('Replies is not an array:', repliesRes.data);
+        if (!Array.isArray(attachmentsRes.data)) console.error('Attachments is not an array:', attachmentsRes.data);
+        if (!Array.isArray(historyRes.data)) console.error('History is not an array:', historyRes.data);
+
+        setReplies(Array.isArray(repliesRes.data) ? repliesRes.data : []);
+        setAttachments(Array.isArray(attachmentsRes.data) ? attachmentsRes.data : []);
+        setHistory(Array.isArray(historyRes.data) ? historyRes.data : []);
         setRating(t.happiness_rating || 0);
         setFeedback(t.customer_feedback || '');
         setTimeSpent(t.time_spent_minutes || 0);
@@ -201,6 +206,7 @@ const TicketDetail = ({ ticketId: propTicketId, onBack: propOnBack }) => {
                 setComment={setComment}
                 handleSendMessage={handleSendMessage}
                 sending={sending}
+                attachments={attachments}
               />
             ) : (
               <TicketHistory history={history} createdAt={ticket.createdAt} />
@@ -217,6 +223,11 @@ const TicketDetail = ({ ticketId: propTicketId, onBack: propOnBack }) => {
             agents={agents}
             assignTicket={assignTicket}
             ticketId={ticketId}
+            attachments={attachments}
+            onUploadSuccess={async () => {
+              const attRes = await fetchAttachments(ticketId).catch(() => ({ data: [] }));
+              setAttachments(attRes.data || []);
+            }}
           />
 
           {isAdminOrAgent && (

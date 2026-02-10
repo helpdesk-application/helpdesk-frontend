@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserPlus, Shield, Mail, MoreVertical, Trash2, Edit2, CheckCircle, XCircle } from 'lucide-react';
+import { UserPlus, Shield, Mail, MoreVertical, Trash2, Edit2, CheckCircle, XCircle, Eye, EyeOff } from 'lucide-react';
 import { fetchUsers, createUser, updateUser, toggleUserStatus, deleteUser } from '../../api/api';
 
 const UserManagement = () => {
@@ -12,6 +12,36 @@ const UserManagement = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'Customer', department: 'General' });
   const [editData, setEditData] = useState({ id: '', name: '', email: '', password: '', role: 'Customer', department: 'General' });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showEditPassword, setShowEditPassword] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000); // Hide after 3 seconds
+  };
+
+  // Get current user role for hierarchy check
+  const currentUserRole = JSON.parse(localStorage.getItem('user'))?.role || 'Customer';
+
+  const roleHierarchy = {
+    'Super Admin': 5,
+    'Admin': 4,
+    'Manager': 3,
+    'Agent': 2,
+    'Customer': 1
+  };
+
+  const currentLevel = roleHierarchy[currentUserRole] || 0;
+
+  const availableRoles = ['Customer', 'Agent', 'Manager', 'Admin', 'Super Admin'].filter(role => {
+    // User can only assign roles strictly lower than themselves, unless they are Super Admin who can do anything
+    // Or maybe allow assigning same level? Let's assume strictly lower or same level? 
+    // Requirement: "don't display higher hierarchy roles like super admin for lower hierarchical roles like admin"
+    const myLevel = roleHierarchy[currentUserRole] || 0;
+    const targetLevel = roleHierarchy[role] || 0;
+    return targetLevel < myLevel;
+  });
 
   const [creating, setCreating] = useState(false);
   const [updating, setUpdating] = useState(false);
@@ -62,9 +92,9 @@ const UserManagement = () => {
       setShowModal(false);
       setFormData({ name: '', email: '', password: '', role: 'Customer', department: 'General' });
       loadUsers();
-      alert('User created successfully!');
+      showToast('User created successfully!', 'success');
     } catch (err) {
-      alert('Failed to create user: ' + (err.response?.data?.message || err.message));
+      showToast('Failed to create user: ' + (err.response?.data?.message || err.message), 'error');
     } finally {
       setCreating(false);
     }
@@ -75,9 +105,9 @@ const UserManagement = () => {
     try {
       await deleteUser(id);
       loadUsers();
-      alert('User deleted successfully');
+      showToast('User deleted successfully', 'success');
     } catch (err) {
-      alert('Failed to delete user: ' + (err.response?.data?.message || err.message));
+      showToast('Failed to delete user: ' + (err.response?.data?.message || err.message), 'error');
     }
   };
 
@@ -108,9 +138,9 @@ const UserManagement = () => {
       await updateUser(editData.id, updatePayload);
       setShowEditModal(false);
       loadUsers();
-      alert('User updated successfully!');
+      showToast('User updated successfully!', 'success');
     } catch (err) {
-      alert('Failed to update user: ' + (err.response?.data?.message || err.message));
+      showToast('Failed to update user: ' + (err.response?.data?.message || err.message), 'error');
     } finally {
       setUpdating(false);
     }
@@ -120,8 +150,9 @@ const UserManagement = () => {
     try {
       await toggleUserStatus(id);
       loadUsers();
+      showToast('User status updated successfully', 'success');
     } catch (err) {
-      alert('Failed to toggle status: ' + (err.response?.data?.message || err.message));
+      showToast('Failed to toggle status: ' + (err.response?.data?.message || err.message), 'error');
     }
   };
 
@@ -195,20 +226,22 @@ const UserManagement = () => {
                     {user.department}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => handleEditClick(user)}
-                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
-                      >
-                        <Edit2 size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteUser(user.id)}
-                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
+                    {currentLevel > (roleHierarchy[user.role] || 0) && (
+                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => handleEditClick(user)}
+                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteUser(user.id)}
+                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -260,14 +293,23 @@ const UserManagement = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Password</label>
-                  <input
-                    required
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full p-3 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="••••••••"
-                  />
+                  <div className="relative">
+                    <input
+                      required
+                      type={showPassword ? "text" : "password"}
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      className="w-full p-3 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500 pr-10"
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -277,11 +319,9 @@ const UserManagement = () => {
                       onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                       className="w-full p-3 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="Customer">Customer</option>
-                      <option value="Agent">Agent</option>
-                      <option value="Manager">Manager</option>
-                      <option value="Admin">Admin</option>
-                      <option value="Super Admin">Super Admin</option>
+                      {availableRoles.map(role => (
+                        <option key={role} value={role}>{role}</option>
+                      ))}
                     </select>
                   </div>
                   <div>
@@ -333,13 +373,22 @@ const UserManagement = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">New Password (leave blank to keep current)</label>
-                  <input
-                    type="password"
-                    value={editData.password}
-                    onChange={(e) => setEditData({ ...editData, password: e.target.value })}
-                    className="w-full p-3 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="••••••••"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showEditPassword ? "text" : "password"}
+                      value={editData.password}
+                      onChange={(e) => setEditData({ ...editData, password: e.target.value })}
+                      className="w-full p-3 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500 pr-10"
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowEditPassword(!showEditPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      {showEditPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -349,11 +398,9 @@ const UserManagement = () => {
                       onChange={(e) => setEditData({ ...editData, role: e.target.value })}
                       className="w-full p-3 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="Customer">Customer</option>
-                      <option value="Agent">Agent</option>
-                      <option value="Manager">Manager</option>
-                      <option value="Admin">Admin</option>
-                      <option value="Super Admin">Super Admin</option>
+                      {availableRoles.map(role => (
+                        <option key={role} value={role}>{role}</option>
+                      ))}
                     </select>
                   </div>
                   <div>
@@ -382,6 +429,16 @@ const UserManagement = () => {
           </div>
         )
       }
+
+      {/* Corner Toast Notification */}
+      {toast.show && (
+        <div className="fixed bottom-5 right-5 z-[100] pointer-events-none">
+          <div className={`bg-white px-6 py-4 rounded-xl shadow-2xl border flex items-center gap-3 transform transition-all duration-300 animate-in fade-in slide-in-from-bottom-5 pointer-events-auto ${toast.type === 'error' ? 'border-red-200 text-red-600' : 'border-green-200 text-green-600'}`}>
+            {toast.type === 'error' ? <XCircle size={24} /> : <CheckCircle size={24} />}
+            <span className="font-semibold text-lg">{toast.message}</span>
+          </div>
+        </div>
+      )}
     </div >
   );
 };

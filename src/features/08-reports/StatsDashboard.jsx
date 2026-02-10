@@ -19,20 +19,23 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend,
 const StatsDashboard = () => {
   const [data, setData] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
+  const [range, setRange] = React.useState('monthly');
+
+  const loadStats = async (selectedRange) => {
+    setLoading(true);
+    try {
+      const response = await fetchAnalytics(selectedRange);
+      setData(response.data);
+    } catch (err) {
+      console.error('Failed to load stats:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   React.useEffect(() => {
-    const loadStats = async () => {
-      try {
-        const response = await fetchAnalytics();
-        setData(response.data);
-      } catch (err) {
-        console.error('Failed to load stats:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadStats();
-  }, []);
+    loadStats(range);
+  }, [range]);
 
   if (loading) {
     return (
@@ -63,9 +66,22 @@ const StatsDashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h2 className="text-2xl font-bold text-gray-800">Analytics Overview</h2>
-        <div className="text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-100 px-3 py-1 rounded-full flex items-center gap-2">
+
+        <div className="flex items-center gap-4 bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100">
+          {['daily', 'weekly', 'monthly'].map((r) => (
+            <button
+              key={r}
+              onClick={() => setRange(r)}
+              className={`px-4 py-1.5 rounded-xl text-xs font-bold capitalize transition-all ${range === r ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              {r}
+            </button>
+          ))}
+        </div>
+
+        <div className="text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-100 px-3 py-1 rounded-full flex items-center gap-2 ml-auto">
           <Zap size={14} className="text-yellow-500" /> Live Data
         </div>
       </div>
