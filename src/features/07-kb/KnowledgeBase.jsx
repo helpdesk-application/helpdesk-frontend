@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, BookOpen, ChevronRight, HelpCircle, Lightbulb, Filter, Layers } from 'lucide-react';
+import { Search, BookOpen, ChevronRight, HelpCircle, Lightbulb, Filter, Layers, CheckCircle } from 'lucide-react';
 import { fetchArticles, searchArticles, createArticle, fetchKBCategories, createKBCategory } from '../../api/api';
 
 const KnowledgeBase = () => {
@@ -9,9 +9,17 @@ const KnowledgeBase = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [selectedArticle, setSelectedArticle] = useState(null);
   const [error, setError] = useState(null);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
-  // Load articles & categories
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
+  };
+
+  // Get user role from local storage
+  const userRole = JSON.parse(localStorage.getItem('user'))?.role || 'Customer';
   const loadData = async (keyword = '', isInitial = false) => {
     if (isInitial) setInitialLoading(true);
     else setLoading(true);
@@ -23,7 +31,6 @@ const KnowledgeBase = () => {
         fetchKBCategories().catch(() => ({ data: [] }))
       ]);
 
-      const userRole = getUserRole();
       const mapped = (articlesRes.data || [])
         .filter(a => {
           // Role-based filtering: Customers only see PUBLIC
@@ -67,28 +74,12 @@ const KnowledgeBase = () => {
 
   const filteredArticles = articles.filter(a => selectedCategory === 'All' || a.category === selectedCategory);
 
-  // Get user role from token
-  const getUserRole = () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return null;
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.role;
-    } catch {
-      return null;
-    }
-  };
-
-  const userRole = getUserRole();
   const canCreate = ['Admin', 'Super Admin', 'Agent', 'Manager'].includes(userRole);
 
   // Article form state
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ title: '', content: '', tags: '', category_id: '', visibility: 'PUBLIC' });
   const [submitting, setSubmitting] = useState(false);
-
-  // Article detail state
-  const [selectedArticle, setSelectedArticle] = useState(null);
 
   const handleCreateArticle = async (e) => {
     e.preventDefault();
@@ -104,8 +95,9 @@ const KnowledgeBase = () => {
       setShowForm(false);
       setFormData({ title: '', content: '', tags: '', category_id: '', visibility: 'PUBLIC' });
       loadData();
+      showToast('Article published successfully!', 'success');
     } catch (err) {
-      alert('Failed to create article: ' + (err.response?.data?.error || err.message));
+      showToast('Failed to create article: ' + (err.response?.data?.error || err.message), 'error');
     } finally {
       setSubmitting(false);
     }
@@ -355,6 +347,15 @@ const KnowledgeBase = () => {
                 Finished Reading
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Corner Toast Notification */}
+      {toast.show && (
+        <div className="fixed bottom-5 right-5 z-[100] pointer-events-none">
+          <div className={`bg-white px-6 py-4 rounded-xl shadow-2xl border flex items-center gap-3 transform transition-all duration-300 animate-in fade-in slide-in-from-bottom-5 pointer-events-auto ${toast.type === 'error' ? 'border-red-200 text-red-600' : 'border-green-200 text-green-600'}`}>
+            {toast.type === 'error' ? <Layers size={24} className="text-red-500" /> : <CheckCircle size={24} className="text-green-500" />}
+            <span className="font-semibold text-lg">{toast.message}</span>
           </div>
         </div>
       )}

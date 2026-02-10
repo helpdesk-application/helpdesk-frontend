@@ -20,7 +20,7 @@ const Login = () => {
 
     console.log('🔐 Login attempt started...');
     console.log('Credentials:', credentials);
-    console.log('API baseURL:', 'http://localhost:3000/api');
+    console.log('API baseURL:', 'http://localhost:2000/api');
 
     // Call real API login
     login(credentials)
@@ -134,7 +134,7 @@ const Login = () => {
 
         <div className="mt-4 p-2 bg-yellow-50 rounded-lg text-xs text-slate-600 border border-yellow-200">
           <p className="font-semibold mb-1">🐛 Debug Info:</p>
-          <p>API: http://localhost:3000/api</p>
+          <p>API: http://localhost:2000/api</p>
           <p>Backend: http://localhost:3001</p>
           <p>Open DevTools (F12) → Console to see detailed logs</p>
         </div>

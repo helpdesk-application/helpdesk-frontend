@@ -1,11 +1,32 @@
 import React from 'react';
 import { Mail, MessageCircle, Linkedin, Send } from 'lucide-react';
 
-const TicketConversation = ({ replies, isAdminOrAgent, ResponseTemplates, category, comment, setComment, handleSendMessage, sending }) => {
+const TicketConversation = ({ replies = [], isAdminOrAgent, ResponseTemplates, category, comment, setComment, handleSendMessage, sending, attachments }) => {
+    // Defensive check
+    const safeReplies = Array.isArray(replies) ? replies : [];
+
     return (
         <div className="p-8 space-y-8">
+            {/* Associated Files section */}
+            {attachments && attachments.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-6 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
+                    <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest w-full mb-1">Attached Files</span>
+                    {attachments.map(file => (
+                        <a
+                            key={file._id}
+                            href={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/attachments/download/${file.filename}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-3 py-1.5 bg-white border border-blue-100 rounded-full text-xs font-bold text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                        >
+                            <Mail size={12} /> {file.original_name}
+                        </a>
+                    ))}
+                </div>
+            )}
+
             <div className="space-y-6">
-                {replies.map((reply, idx) => (
+                {safeReplies.map((reply, idx) => (
                     <div key={reply._id || idx} className="flex gap-4">
                         <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600 shrink-0">
                             {reply.user_id?.name?.charAt(0) || reply.user_id?.email?.charAt(0) || 'U'}
@@ -24,7 +45,7 @@ const TicketConversation = ({ replies, isAdminOrAgent, ResponseTemplates, catego
                         </div>
                     </div>
                 ))}
-                {replies.length === 0 && <p className="text-center py-10 text-slate-400 italic text-sm">No messages yet.</p>}
+                {safeReplies.length === 0 && <p className="text-center py-10 text-slate-400 italic text-sm">No messages yet.</p>}
             </div>
 
             <div className="pt-8 border-t border-slate-100 space-y-4">

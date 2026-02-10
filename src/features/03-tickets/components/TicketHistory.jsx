@@ -13,8 +13,8 @@ const TicketHistory = ({ history, createdAt }) => {
                         </div>
                         <p className="text-sm text-slate-600">
                             Changed <span className="font-bold text-slate-900 uppercase tracking-tight">{log.field}</span> from
-                            <span className="mx-2 line-through opacity-50 px-1 italic">"{log.old_value || 'None'}"</span> to
-                            <span className="mx-2 font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">"{log.new_value}"</span>
+                            <span className="mx-2 line-through opacity-50 px-1 italic">"{typeof log.old_value === 'object' ? JSON.stringify(log.old_value) : (log.old_value || 'None')}"</span> to
+                            <span className="mx-2 font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">"{typeof log.new_value === 'object' ? JSON.stringify(log.new_value) : log.new_value}"</span>
                         </p>
                     </div>
                 ))}

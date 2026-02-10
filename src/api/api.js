@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // Point frontend API client to API gateway (which proxies to backend)
 const API = axios.create({
-  baseURL: 'http://localhost:3000/api',
+  baseURL: 'http://localhost:2000/api',
   timeout: 10000
 });
 
@@ -47,7 +47,7 @@ export const postReply = (ticketId, message) => API.post(`/tickets/${ticketId}/r
 export const fetchTicketHistory = (ticketId) => API.get(`/tickets/${ticketId}/history`);
 
 // Analytics
-export const fetchAnalytics = () => API.get('/reports/summary');
+export const fetchAnalytics = (range = 'monthly') => API.get(`/reports/summary?range=${range}`);
 
 // Notifications
 export const fetchNotifications = () => API.get('/notifications');
@@ -56,7 +56,7 @@ export const markNotificationRead = (id) => API.patch(`/notifications/${id}/read
 export const login = (credentials) => API.post('/auth/login', credentials);
 export const register = (payload) => API.post('/auth/register', payload);
 export const changePassword = (payload) => API.post('/auth/change-password', payload);
-export const getTestToken = (payload) => API.post('/auth/test-token', payload);
+
 
 // Attachments
 export const uploadAttachment = (formData) => API.post('/attachments', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
