@@ -3,6 +3,11 @@ import { Clock } from 'lucide-react';
 import SLATimer from '../../05-sla/SLATimer';
 import FileUploader from '../../04-attachments/FileUploader';
 
+const isImage = (filename) => {
+    const ext = filename.split('.').pop().toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
+};
+
 const TicketSidebar = ({ ticket, isAdminOrAgent, isAdmin, handleStatusChange, agents, assignTicket, ticketId, attachments, onUploadSuccess }) => {
     return (
         <div className="space-y-6">
@@ -60,12 +65,20 @@ const TicketSidebar = ({ ticket, isAdminOrAgent, isAdmin, handleStatusChange, ag
                     {attachments && attachments.length > 0 ? (
                         attachments.map(file => (
                             <div key={file._id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 group hover:border-blue-200 transition-all">
-                                <div className="h-8 w-8 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 shrink-0">
-                                    <Clock size={14} /> {/* Placeholder for file icon */}
+                                <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 shrink-0 overflow-hidden">
+                                    {isImage(file.filename) ? (
+                                        <img
+                                            src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/attachments/download/${file.filename}`}
+                                            alt={file.original_name}
+                                            className="h-full w-full object-cover"
+                                        />
+                                    ) : (
+                                        <Clock size={14} />
+                                    )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-bold text-slate-700 truncate">{file.original_name}</p>
-                                    <p className="text-[10px] text-slate-400">{(file.size / 1024).toFixed(1)} KB</p>
+                                    <p className="text-[11px] font-bold text-slate-700 truncate">{file.original_name}</p>
+                                    <p className="text-[9px] text-slate-400">{(file.size / 1024).toFixed(1)} KB</p>
                                 </div>
                                 <a
                                     href={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/attachments/download/${file.filename}`}
@@ -73,7 +86,7 @@ const TicketSidebar = ({ ticket, isAdminOrAgent, isAdmin, handleStatusChange, ag
                                     rel="noopener noreferrer"
                                     className="p-1.5 text-slate-300 hover:text-blue-600 hover:bg-white rounded-lg transition-all"
                                 >
-                                    <Clock size={14} /> {/* Placeholder for download icon */}
+                                    <Clock size={14} />
                                 </a>
                             </div>
                         ))

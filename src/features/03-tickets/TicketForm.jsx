@@ -5,6 +5,7 @@ import { createTicket, uploadAttachment } from '../../api/api';
 const TicketForm = ({ onClose, onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [preview, setPreview] = useState(null);
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     subject: '',
@@ -19,6 +20,18 @@ const TicketForm = ({ onClose, onSuccess }) => {
       return;
     }
     setSelectedFile(file);
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onloadend = () => setPreview(reader.result);
+      reader.readAsDataURL(file);
+    } else {
+      setPreview(null);
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setSelectedFile(null);
+    setPreview(null);
   };
 
   const handleSubmit = async (e) => {
@@ -138,11 +151,17 @@ const TicketForm = ({ onClose, onSuccess }) => {
                 </label>
               ) : (
                 <div className="flex items-center justify-between w-full px-2">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="text-green-500" size={20} />
+                  <div className="flex items-center gap-3">
+                    {preview ? (
+                      <div className="h-10 w-10 rounded-lg overflow-hidden border border-slate-200">
+                        <img src={preview} alt="Upload preview" className="h-full w-full object-cover" />
+                      </div>
+                    ) : (
+                      <CheckCircle2 className="text-green-500" size={20} />
+                    )}
                     <span className="text-sm font-medium text-slate-700 truncate max-w-[200px]">{selectedFile.name}</span>
                   </div>
-                  <button type="button" onClick={() => setSelectedFile(null)} className="text-red-500 hover:text-red-700 text-xs font-bold">Remove</button>
+                  <button type="button" onClick={handleRemoveFile} className="text-red-500 hover:text-red-700 text-xs font-bold transition-colors">Remove</button>
                 </div>
               )}
             </div>
