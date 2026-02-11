@@ -1,6 +1,11 @@
 import React from 'react';
 import { Mail, MessageCircle, Linkedin, Send } from 'lucide-react';
 
+const isImage = (filename) => {
+    const ext = filename.split('.').pop().toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
+};
+
 const TicketConversation = ({ replies = [], isAdminOrAgent, ResponseTemplates, category, comment, setComment, handleSendMessage, sending, attachments }) => {
     // Defensive check
     const safeReplies = Array.isArray(replies) ? replies : [];
@@ -9,19 +14,43 @@ const TicketConversation = ({ replies = [], isAdminOrAgent, ResponseTemplates, c
         <div className="p-8 space-y-8">
             {/* Associated Files section */}
             {attachments && attachments.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-6 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
-                    <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest w-full mb-1">Attached Files</span>
-                    {attachments.map(file => (
-                        <a
-                            key={file._id}
-                            href={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/attachments/download/${file.filename}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 px-3 py-1.5 bg-white border border-blue-100 rounded-full text-xs font-bold text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
-                        >
-                            <Mail size={12} /> {file.original_name}
-                        </a>
-                    ))}
+                <div className="mb-8">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-4">Attached Files</span>
+                    <div className="flex flex-wrap gap-4">
+                        {attachments.map(file => (
+                            isImage(file.filename) ? (
+                                <a
+                                    key={file._id}
+                                    href={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/attachments/download/${file.filename}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="group relative h-24 w-24 rounded-2xl overflow-hidden border border-slate-200 hover:border-blue-400 transition-all shadow-sm"
+                                >
+                                    <img
+                                        src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/attachments/download/${file.filename}`}
+                                        alt={file.original_name}
+                                        className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
+                                        <p className="text-[8px] text-white font-bold truncate">{file.original_name}</p>
+                                    </div>
+                                </a>
+                            ) : (
+                                <a
+                                    key={file._id}
+                                    href={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/attachments/download/${file.filename}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 transition-all shadow-sm h-24 w-24 flex-col justify-center items-center text-center group"
+                                >
+                                    <div className="h-8 w-8 bg-white rounded-lg flex items-center justify-center text-slate-400 group-hover:text-blue-500 transition-colors">
+                                        <Mail size={16} />
+                                    </div>
+                                    <span className="mt-1 truncate w-full">{file.original_name}</span>
+                                </a>
+                            )
+                        ))}
+                    </div>
                 </div>
             )}
 

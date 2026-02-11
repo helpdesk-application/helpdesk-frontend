@@ -1,5 +1,5 @@
 import React, { lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import KnowledgeBase from './features/07-kb/KnowledgeBase';
 
 // 1. Import Security & Layout
