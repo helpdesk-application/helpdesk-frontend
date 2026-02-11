@@ -25,11 +25,7 @@ const FileUploader = ({ ticketId, onUploadSuccess }) => {
         setError('');
 
         try {
-            await api.post("/attachments", formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            });
+            await api.post("/attachments", formData);
             setFile(null);
             if (onUploadSuccess) onUploadSuccess();
         } catch (err) {

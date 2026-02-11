@@ -18,16 +18,9 @@ const Login = () => {
     setLoading(true);
     setError('');
 
-    console.log('🔐 Login attempt started...');
-    console.log('Credentials:', credentials);
-    console.log('API baseURL:', 'http://localhost:2000/api');
-
     // Call real API login
     login(credentials)
       .then(res => {
-        console.log('✅ Login API call succeeded!');
-        console.log('Response status:', res.status);
-        console.log('Response data:', res.data);
 
         const { token, user } = res.data;
 
@@ -35,18 +28,13 @@ const Login = () => {
           throw new Error('Invalid response: missing token or user');
         }
 
-        console.log('💾 Storing token and user in localStorage...');
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
-
-        console.log('✅ Stored successfully');
 
         // Determine starting page based on role
         const startPage = ['Admin', 'Super Admin', 'Manager'].includes(user.role)
           ? '/dashboard'
           : '/tickets';
-
-        console.log(`Redirecting to ${startPage}...`);
 
         // Use setTimeout to ensure state update completes before navigation
         setTimeout(() => {
@@ -54,9 +42,6 @@ const Login = () => {
         }, 100);
       })
       .catch(err => {
-        console.error('Login failed:', err.message);
-
-        const msg = err?.response?.data?.message || err.message || 'Login failed';
 
 
         setError(msg);
@@ -123,18 +108,6 @@ const Login = () => {
           </p>
         </div>
 
-        <div className="mt-4 p-3 bg-blue-50 rounded-lg text-xs text-slate-600">
-          <p className="font-semibold mb-1">Demo Credentials:</p>
-          <p>Email: admin@example.com</p>
-          <p>Password: password123</p>
-        </div>
-
-        <div className="mt-4 p-2 bg-yellow-50 rounded-lg text-xs text-slate-600 border border-yellow-200">
-          <p className="font-semibold mb-1">🐛 Debug Info:</p>
-          <p>API: http://localhost:2000/api</p>
-          <p>Backend: http://localhost:3001</p>
-          <p>Open DevTools (F12) → Console to see detailed logs</p>
-        </div>
       </div>
     </div>
   );

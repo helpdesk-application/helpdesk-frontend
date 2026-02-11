@@ -50,7 +50,7 @@ export const register = (payload) => API.post('/auth/register', payload);
 export const changePassword = (payload) => API.post('/auth/change-password', payload);
 
 // Attachments
-export const uploadAttachment = (formData) => API.post('/attachments', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+export const uploadAttachment = (formData) => API.post('/attachments', formData);
 export const fetchAttachments = (ticketId) => API.get(`/attachments/ticket/${ticketId}`);
 export const downloadAttachment = (filename) => `${API.defaults.baseURL}/attachments/download/${filename}`; // Direct link
 
