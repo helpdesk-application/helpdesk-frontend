@@ -42,8 +42,7 @@ const Login = () => {
         }, 100);
       })
       .catch(err => {
-
-
+        const msg = err.response?.data?.message || err.message || 'Login failed. Please try again.';
         setError(msg);
       })
       .finally(() => setLoading(false));

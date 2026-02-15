@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // Point frontend API client to API gateway (which proxies to backend)
 const API = axios.create({
-  baseURL: import.meta.env.API_URL + '/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL + '/api',
   withCredentials: true,
   timeout: 10000
 });
