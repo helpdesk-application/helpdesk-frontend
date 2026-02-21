@@ -1,9 +1,9 @@
 // This file is the bridge for the API Team
 import axios from 'axios';
 
-// Point frontend API client to API gateway (which proxies to backend)
+// Point frontend API client to API gateway
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL + '/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   withCredentials: true,
   timeout: 10000
 });
@@ -38,6 +38,7 @@ export const assignTicket = (id, agentId) => API.patch(`/tickets/${id}/assign`, 
 export const fetchReplies = (ticketId) => API.get(`/tickets/${ticketId}/replies`);
 export const postReply = (ticketId, message) => API.post(`/tickets/${ticketId}/replies`, { message });
 export const fetchTicketHistory = (ticketId) => API.get(`/tickets/${ticketId}/history`);
+export const fetchAIInsights = (ticketId) => API.get(`/tickets/${ticketId}/ai-insights`);
 
 // Analytics
 export const fetchAnalytics = (range = 'monthly') => API.get(`/reports/summary?range=${range}`);
@@ -56,7 +57,7 @@ export const fetchAttachments = (ticketId) => API.get(`/attachments/ticket/${tic
 export const downloadAttachment = (filename) => `${API.defaults.baseURL}/attachments/download/${filename}`; // Direct link
 
 // Knowledge Base
-export const fetchArticles = () => API.get('/kb');
+export const fetchArticles = (category) => API.get(`/kb${category ? `?category=${encodeURIComponent(category)}` : ''}`);
 export const fetchKBCategories = () => API.get('/kb/categories');
 export const searchArticles = (keyword) => API.get(`/kb/search?q=${encodeURIComponent(keyword)}`);
 export const createArticle = (payload) => API.post('/kb', payload);

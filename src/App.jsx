@@ -1,25 +1,26 @@
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import KnowledgeBase from './features/07-kb/KnowledgeBase';
+import KnowledgeBase from './features/kb/KnowledgeBase';
 
 // 1. Import Security & Layout
 import ProtectedRoute from './routes/ProtectedRoute';
 import MainLayout from './components/layout/MainLayout';
 
 // 2. Import Feature Modules
-import Login from './features/01-auth/Login';
-import Register from './features/01-auth/Register';
-import TicketList from './features/03-tickets/TicketList';
-import StatsDashboard from './features/08-reports/StatsDashboard';
-import UserManagement from './features/02-users/UserManagement';
-import UserProfile from './features/02-users/UserProfile';
-import AccountSettings from './features/02-users/AccountSettings';
-import NotificationList from './features/06-notifications/NotificationList';
-import TicketDetail from './features/03-tickets/TicketDetail';
+import Login from './features/auth/Login';
+import Register from './features/auth/Register';
+import TicketList from './features/tickets/TicketList';
+import MetricReport from './features/reports/MetricReport';
+import StatsDashboard from './features/reports/StatsDashboard';
+import UserManagement from './features/users/UserManagement';
+import UserProfile from './features/users/UserProfile';
+import AccountSettings from './features/users/AccountSettings';
+import NotificationList from './features/notifications/NotificationList';
+import TicketDetail from './features/tickets/TicketDetail';
 
 // 3. Lazy Load Auth Features
-const ForgotPassword = lazy(() => import('./features/01-auth/ForgotPassword'));
-const ResetPassword = lazy(() => import('./features/01-auth/ResetPassword'));
+const ForgotPassword = lazy(() => import('./features/auth/ForgotPassword'));
+const ResetPassword = lazy(() => import('./features/auth/ResetPassword'));
 
 // 3. Dynamic Redirection Helper
 const getDefaultRoute = () => {
@@ -88,6 +89,17 @@ function App() {
             <ProtectedRoute allowedRoles={['Super Admin', 'Admin', 'Manager']}>
               <MainLayout>
                 <StatsDashboard />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/reports/:metricId"
+          element={
+            <ProtectedRoute allowedRoles={['Super Admin', 'Admin', 'Manager']}>
+              <MainLayout>
+                <MetricReport />
               </MainLayout>
             </ProtectedRoute>
           }
