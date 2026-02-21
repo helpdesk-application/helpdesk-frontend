@@ -32,7 +32,7 @@ const TicketList = () => {
           t.priority === 'LOW' ? 'Low' :
             t.priority === 'CRITICAL' ? 'Critical' : 'Medium',
         category: 'General',
-        createdAt: new Date(t.created_at).toLocaleDateString()
+        createdAt: t.created_at
       }));
       setTickets(mapped);
     } catch (err) {
@@ -166,7 +166,7 @@ const TicketList = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-slate-400">{new Date(ticket.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+          <span className="text-[10px] text-slate-400">{ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '—'}</span>
           {ticket.assignee ? (
             <div
               className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] text-white font-bold ring-2 ring-white ${getAvatarColor(ticket.assignee.name || ticket.assignee.email)}`}
@@ -307,7 +307,7 @@ const TicketList = () => {
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-2 text-sm text-slate-500">
-                        <span className="text-xs">{new Date(ticket.createdAt).toLocaleDateString()}</span>
+                        <span className="text-xs">{ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString() : '—'}</span>
                       </div>
                     </td>
                     <td className="py-4 px-6 text-right">
